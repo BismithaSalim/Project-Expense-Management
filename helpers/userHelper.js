@@ -46,7 +46,6 @@ async function addUser(req) {
 
 async function login(req) {
   try {
-    console.log("hii")
       const { userName, password } = req.body;
       if (!(userName && password)) {
          throw new Error("UserName or Password required");
@@ -55,7 +54,6 @@ async function login(req) {
       const userData = await User.findOne({
         $and: [{ userName },{ isActive: true }],
       })
-      console.log("userData",userData)
       if (!userData) {
         return {
           status: 105,
@@ -63,19 +61,18 @@ async function login(req) {
           message: "user not exist"
         };
       }else{
-        var dates = new Date();
-        const res = await Token.find({$and:[{userName:userName,createdAt :{"$gte": dates.setHours(0,0,0,0),
-       "$lte":dates.setHours(23, 59, 59, 999)}}]})
+      //   var dates = new Date();
+      //   const res = await Token.find({$and:[{userName:userName,createdAt :{"$gte": dates.setHours(0,0,0,0),
+      //  "$lte":dates.setHours(23, 59, 59, 999)}}]})
 
-            if(res.length!=0){
-                return {
-                status: 102,
-                message:"Already logged in" ,
-                token:res[0].token,
-                result:res[0].userName
-                //    userName:res[0].userName
-                };
-            }else{
+            // if(res.length!=0){
+            //     return {
+            //     status: 102,
+            //     message:"Already logged in" ,
+            //     token:res[0].token,
+            //     result:res[0].userName
+            //     };
+            // }else{
                 // console.log("userData",userData)
             if (userData && (await bcrypt.compare(password, userData.password))) {
 
@@ -106,7 +103,7 @@ async function login(req) {
                 status: 105,
                 };
             }
-        }
+        // }
   }
 } catch (err) {
     console.log(err)
@@ -125,8 +122,7 @@ async function logOut(req) {
     );
 
     var dates=new Date()
-    const res = await Token.find({$and:[{token:token,createdAt :{"$gte": dates.setHours(0,0,0,0),
-    "$lte":dates.setHours(23, 59, 59, 999)}}]})
+    const res = await Token.findOne({ token: token });
 
     if(res.length==0){
       return {
@@ -135,7 +131,7 @@ async function logOut(req) {
       };
     }else{
       const result = await Token.deleteOne(
-        { _id: res[0]._id },
+        { _id: res._id },
         { returnOriginal: false }
       );
 
@@ -307,6 +303,65 @@ async function updateUser(req) {
   }
 }
 
+async function getAllUsers(req) {
+  try {
+    // console.log("req.user.organisationId",req.user.organisationId)
+    let { page = 1, limit = 10,showDeleted } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
+
+    if(showDeleted=="false"){
+      const users = await User.find({organisationRefId: req.user.organisationId,isActive:true})
+        .sort({ userId: 1 })          
+        .skip((page - 1) * limit)
+        .limit(limit);
+
+      return {
+        status: 100,
+        message: "success",
+        result: users
+      };
+    }else{
+      const users = await User.find({organisationRefId: req.user.organisationId,isActive:false})
+        .sort({ userId: 1 })          
+        .skip((page - 1) * limit)
+        .limit(limit);
+
+      return {
+        status: 100,
+        message: "success",
+        result: users
+      };
+    }
+  } catch (err) {
+    return {
+      status: 105,
+      result: null,
+      errorDetails: err.message,
+    };
+  }
+}
+ 
+async function getUserById(req) {
+  try {
+    let { userId } = req.query;
+
+    const user = await User.find({_id:userId})
+
+    return {
+      status: 100,
+      message: "success",
+      result: user
+    };
+  } catch (err) {
+    return {
+      status: 105,
+      result: null,
+      errorDetails: err.message,
+    };
+  }
+}
+
 module.exports={
     addUser,
     login,
@@ -314,5 +369,7 @@ module.exports={
     addAdminUser,
     getAdminByOrganisation,
     deleteUser,
-    updateUser
+    updateUser,
+    getAllUsers,
+    getUserById
 }

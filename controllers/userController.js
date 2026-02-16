@@ -113,6 +113,38 @@ async function updateUser(req, res) {
     });
 }
 
+async function getAllUsers(req, res) {
+    userHelper.getAllUsers(req).then((output) => {
+      output.result
+        ? res.status(200).json({
+            message: output.message,
+            data: output.result,
+            status: output.status,
+          })
+        : res.status(400).json({
+            message: "Error",
+            errorDetails: output.errorDetails,
+            status: output.status,
+          });
+    });
+}
+
+async function getUserById(req, res) {
+    userHelper.getUserById(req).then((output) => {
+      output.result
+        ? res.status(200).json({
+            message: output.message,
+            data: output.result,
+            status: output.status,
+          })
+        : res.status(400).json({
+            message: "Error",
+            errorDetails: output.errorDetails,
+            status: output.status,
+          });
+    });
+}
+
 module.exports={
     addUser,
     login,
@@ -120,5 +152,7 @@ module.exports={
     addAdminUser,
     getAdminByOrganisation,
     deleteUser,
-    updateUser
+    updateUser,
+    getAllUsers,
+    getUserById
 }

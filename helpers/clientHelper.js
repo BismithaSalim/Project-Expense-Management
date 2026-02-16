@@ -61,7 +61,7 @@ async function getAllClients(req) {
     let { page = 1, limit = 10,showDeleted } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
-
+// console.log("req.user.organisationId",req.user.organisationId)
     if(showDeleted=="false"){
       const clients = await Client.find({organisationRefId: req.user.organisationId,isActive:true})
         .sort({ clientId: 1 })          
@@ -96,7 +96,7 @@ async function getAllClients(req) {
 
 async function getClientById(req) {
   try {
-    let { clientId } = req.query;;
+    let { clientId } = req.query;
 
     const clients = await Client.find({_id:clientId})
       .sort({ clientId: 1 })

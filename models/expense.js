@@ -19,6 +19,7 @@ const expenseSchema = new Schema(
     },
     date:{type: Date},
     category: { type: String},
+    model: { type: String},
     amount: { type: Number, default: 0 },
     vat: { type: Number, default: 0 },
     totalAmount: { type: Number, default: 0 },

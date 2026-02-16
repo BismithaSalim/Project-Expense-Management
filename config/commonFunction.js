@@ -4,7 +4,7 @@ const Token = require("../models/token");
 
 async function jwtTokenGenerator(data) {
   const token = jwt.sign(data, process.env.JWT_SECRET, {
-    expiresIn: "24h",
+    // expiresIn: "24h",
   });
   return token;
 }

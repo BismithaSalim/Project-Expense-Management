@@ -81,7 +81,7 @@ async function getAllProjects(req) {
               path: "clientRefId",
               select: "clientName",
             })
-            .sort({ projectId: 1 })          
+            .sort({ projectId: 1 })        
             .skip((page - 1) * limit)
             .limit(limit);
 
