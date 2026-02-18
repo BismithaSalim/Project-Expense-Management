@@ -56,33 +56,47 @@ async function updateMaster(req) {
 
 async function getAllMasters(req) {
   try {
-    let { page = 1, limit = 10,showDeleted } = req.query;
+    let { page = 1, limit = 10, search = "" } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
 
-    if(showDeleted=="false"){
-      const masters = await Master.find({organisationRefId: req.user.organisationId,isActive:true})
-        .sort({ typeId: 1 })          
-        .skip((page - 1) * limit)
-        .limit(limit);
 
-      return {
-        status: 100,
-        message: "success",
-        result: masters
-      };
-    }else{
-      const masters = await Master.find({organisationRefId: req.user.organisationId,isActive:false})
-        .sort({ typeId: 1 })          
-        .skip((page - 1) * limit)
-        .limit(limit);
+    const filter = {
+      organisationRefId: req.user.organisationId,
+      isActive: true
+    };
 
-      return {
-        status: 100,
-        message: "success",
-        result: masters
-      };
+    if (search && search.trim() !== "") {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { type: { $regex: search, $options: "i" } }
+      ];
     }
+    // if(showDeleted=="false"){
+    const totalCount = await Master.countDocuments(filter);
+      const masters = await Master.find(filter)
+        .sort({ typeId: 1 })          
+        .skip((page - 1) * limit)
+        .limit(limit);
+// console.log("masters",masters)
+      return {
+        status: 100,
+        message: "success",
+        result: masters,
+        totalCount
+      };
+    // }else{
+    //   const masters = await Master.find({organisationRefId: req.user.organisationId,isActive:false})
+    //     .sort({ typeId: 1 })          
+    //     .skip((page - 1) * limit)
+    //     .limit(limit);
+
+    //   return {
+    //     status: 100,
+    //     message: "success",
+    //     result: masters
+    //   };
+    // }
   } catch (err) {
     return {
       status: 105,
