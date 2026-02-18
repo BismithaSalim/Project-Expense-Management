@@ -9,7 +9,11 @@ async function addClient(req) {
       throw new Error("Please fill out all required fields");
     }
 
-    // Get last client sorted by numeric ID
+    const isExist =await Client.findOne({clientName:clientName})
+    if(isExist){
+      // throw new Error("Client Already exist");
+      return { status: 102, message: "Client Already exist", result: null };
+    }
     const lastClient = await Client.findOne({}, {}, { sort: { clientId: -1 } });
 
     let newId;
@@ -56,35 +60,76 @@ async function updateClient(req) {
 }
 
 
+// async function getAllClients(req) {
+//   try {
+//     let { page = 1, limit = 10,showDeleted } = req.query;
+//     page = parseInt(page);
+//     limit = parseInt(limit);
+
+//     if(showDeleted=="false"){
+//       const clients = await Client.find({organisationRefId: req.user.organisationId,isActive:true})
+//         .sort({ clientId: 1 })          
+//         .skip((page - 1) * limit)
+//         .limit(limit);
+
+//       return {
+//         status: 100,
+//         message: "success",
+//         result: clients
+//       };
+//     }else{
+//       const clients = await Client.find({organisationRefId: req.user.organisationId,isActive:false})
+//         .sort({ clientId: 1 })          
+//         .skip((page - 1) * limit)
+//         .limit(limit);
+
+//       return {
+//         status: 100,
+//         message: "success",
+//         result: clients
+//       };
+//     }
+//   } catch (err) {
+//     return {
+//       status: 105,
+//       result: null,
+//       errorDetails: err.message,
+//     };
+//   }
+// }
+
 async function getAllClients(req) {
   try {
-    let { page = 1, limit = 10,showDeleted } = req.query;
+    let { page = 1, limit = 10, showDeleted, search = "" } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
-// console.log("req.user.organisationId",req.user.organisationId)
-    if(showDeleted=="false"){
-      const clients = await Client.find({organisationRefId: req.user.organisationId,isActive:true})
-        .sort({ clientId: 1 })          
-        .skip((page - 1) * limit)
-        .limit(limit);
 
-      return {
-        status: 100,
-        message: "success",
-        result: clients
-      };
-    }else{
-      const clients = await Client.find({organisationRefId: req.user.organisationId,isActive:false})
-        .sort({ clientId: 1 })          
-        .skip((page - 1) * limit)
-        .limit(limit);
+    const filter = {
+      organisationRefId: req.user.organisationId,
+      isActive: showDeleted == "false" ? true : false,
+    };
 
-      return {
-        status: 100,
-        message: "success",
-        result: clients
-      };
+    if (search && search.trim() !== "") {
+      filter.$or = [
+        { clientName: { $regex: search, $options: "i" } },
+        { type: { $regex: search, $options: "i" } },
+        { status: { $regex: search, $options: "i" } }
+      ];
     }
+
+    const totalCount = await Client.countDocuments(filter);
+
+    const clients = await Client.find(filter)
+      .sort({ clientId: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    return {
+      status: 100,
+      message: "success",
+      result: clients,
+      totalCount: totalCount,
+    };
   } catch (err) {
     return {
       status: 105,

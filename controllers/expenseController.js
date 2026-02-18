@@ -23,6 +23,7 @@ async function getAllExpenses(req, res) {
             message: output.message,
             data: output.result,
             status: output.status,
+            totalCount: output.totalCount
           })
         : res.status(400).json({
             message: "Error",

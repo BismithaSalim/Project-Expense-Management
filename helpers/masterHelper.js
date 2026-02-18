@@ -21,7 +21,7 @@ async function addMaster(req) {
     const data = {
       ...req.body,
       organisationRefId: req.user.organisationId,
-      clientId: `type-${newId}`,
+      typeId: `type-${newId}`,
     };
 
     const newType = new Master(data);
@@ -94,11 +94,8 @@ async function getAllMasters(req) {
 
 async function getMasterById(req) {
   try {
-    let { typeId } = req.query;
-
-    const masters = await Master.find({_id:typeId})
-      .sort({ typeId: 1 })
-
+    let { id } = req.query;
+    const masters = await Master.find({_id:id})
     return {
       status: 100,
       message: "success",
@@ -135,10 +132,28 @@ async function deleteMaster(req) {
   }
 }
 
+async function getMasterByCategory(req) {
+  try {
+    const masters = await Master.find({type:"Category",isActive:true})
+    return {
+      status: 100,
+      message: "success",
+      result: masters
+    };
+  } catch (err) {
+    return {
+      status: 105,
+      result: null,
+      errorDetails: err.message,
+    };
+  }
+}
+
 module.exports={
     addMaster,
     getAllMasters,
     updateMaster,
     getMasterById,
-    deleteMaster
+    deleteMaster,
+    getMasterByCategory
 }

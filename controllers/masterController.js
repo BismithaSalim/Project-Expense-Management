@@ -80,10 +80,27 @@ async function deleteMaster(req, res) {
     });
 }
 
+async function getMasterByCategory(req, res) {
+    masterHelper.getMasterByCategory(req).then((output) => {
+      output.result
+        ? res.status(200).json({
+            message: output.message,
+            data: output.result,
+            status: output.status,
+          })
+        : res.status(400).json({
+            message: "Error",
+            errorDetails: output.errorDetails,
+            status: output.status,
+          });
+    });
+}
+
   module.exports={
     addMaster,
     getAllMasters,
     updateMaster,
     getMasterById,
-    deleteMaster
+    deleteMaster,
+    getMasterByCategory
   }

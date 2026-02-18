@@ -5,7 +5,12 @@ const masterSchema = new Schema(
     name: { type: String },
     typeId:{ type: String },
     type:{ type: String },
-    isActive:{ type: Boolean,default:true }
+    isActive:{ type: Boolean,default:true },
+    organisationRefId: { 
+                type: Schema.Types.ObjectId,
+                ref:"organisation",
+                default: null
+        }
   },
   { timestamps: true }
 );

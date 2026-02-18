@@ -8,6 +8,11 @@ async function addProject(req) {
       throw new Error("Please fill out all required fields");
     }
 
+    const isExist =await Project.findOne({projectName:projectName})
+        if(isExist){
+          return { status: 102, message: "Project Already exist", result: null };
+        }
+
     const lastProject = await Project.findOne({}, {}, { sort: { projectId: -1 } });
 
     let newId;
@@ -54,43 +59,89 @@ async function updateProject(req) {
 }
 
 
+// async function getAllProjects(req) {
+//   try {
+//     let { page = 1, limit = 10 ,showDeleted } = req.query;
+//     page = parseInt(page);
+//     limit = parseInt(limit);
+
+//     if(showDeleted=="false"){
+//         const projects = await Project.find({organisationRefId: req.user.organisationId,isActive:true})
+//           .populate({
+//             path: "clientRefId",
+//             select: "clientName",
+//           })
+//           .sort({ projectId: 1 })          
+//           .skip((page - 1) * limit)
+//           .limit(limit);
+
+//         return {
+//           status: 100,
+//           message: "success",
+//           result: projects,
+//           totalCount: projects.length
+//         };
+//       }else{
+//           const projects = await Project.find({organisationRefId: req.user.organisationId,isActive:false})
+//             .populate({
+//               path: "clientRefId",
+//               select: "clientName",
+//             })
+//             .sort({ projectId: 1 })        
+//             .skip((page - 1) * limit)
+//             .limit(limit);
+
+//           return {
+//             status: 100,
+//             message: "success",
+//             result: projects,
+//             totalCount: projects.length
+//           };
+//       }
+//   } catch (err) {
+//     return {
+//       status: 105,
+//       result: null,
+//       errorDetails: err.message,
+//     };
+//   }
+// }
+
 async function getAllProjects(req) {
   try {
-    let { page = 1, limit = 10 ,showDeleted } = req.query;
+    let { page = 1, limit = 10, showDeleted,search = "" } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
 
-    if(showDeleted=="false"){
-        const projects = await Project.find({organisationRefId: req.user.organisationId,isActive:true})
-          .populate({
-            path: "clientRefId",
-            select: "clientName",
-          })
-          .sort({ projectId: 1 })          
-          .skip((page - 1) * limit)
-          .limit(limit);
+    const filter = {
+      organisationRefId: req.user.organisationId,
+      isActive: showDeleted == "false" ? true : false,
+    };
 
-        return {
-          status: 100,
-          message: "success",
-          result: projects
-        };
-      }else{
-          const projects = await Project.find({organisationRefId: req.user.organisationId,isActive:false})
-            .populate({
-              path: "clientRefId",
-              select: "clientName",
-            })
-            .sort({ projectId: 1 })        
-            .skip((page - 1) * limit)
-            .limit(limit);
+    if (search && search.trim() !== "") {
+      filter.$or = [
+        { projectName: { $regex: search, $options: "i" } },
+        { status: { $regex: search, $options: "i" } }
+      ];
+    }
 
-          return {
-            status: 100,
-            message: "success",
-            result: projects
-          };
-      }
+    const totalCount = await Project.countDocuments(filter);
+
+    const projects = await Project.find(filter)
+      .populate({
+        path: "clientRefId",
+        select: "clientName",
+      })
+      .sort({ projectId: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    return {
+      status: 100,
+      message: "success",
+      result: projects,
+      totalCount: totalCount,
+    };
   } catch (err) {
     return {
       status: 105,

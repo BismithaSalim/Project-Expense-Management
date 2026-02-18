@@ -75,49 +75,89 @@ async function updateExpense(req) {
 }
 
 
+// async function getAllExpenses(req) {
+//   try {
+//     let { page = 1, limit = 10, showDeleted} = req.query;
+//     page = parseInt(page);
+//     limit = parseInt(limit);
+
+//   if(showDeleted=="false"){
+//     const expenses = await Expense.find({organisationRefId: req.user.organisationId,isActive:true})
+//     .populate({
+//       path: "clientRefId",
+//       select: "clientName",
+//     })
+//     .populate({
+//       path: "projectRefId",
+//       select: "projectName",
+//     })    
+//     .skip((page - 1) * limit)
+//     .limit(limit);
+
+//     return {
+//       status: 100,
+//       message: "success",
+//       result: expenses
+//     };
+//   }else{
+//     const expenses = await Expense.find({organisationRefId: req.user.organisationId,isActive:false})
+//     .populate({
+//       path: "clientRefId",
+//       select: "clientName",
+//     })
+//     .populate({
+//       path: "projectRefId",
+//       select: "projectName",
+//     })    
+//     .skip((page - 1) * limit)
+//     .limit(limit);
+
+//     return {
+//       status: 100,
+//       message: "success",
+//       result: expenses
+//     };
+//   }
+//   } catch (err) {
+//     return {
+//       status: 105,
+//       result: null,
+//       errorDetails: err.message,
+//     };
+//   }
+// }
+
 async function getAllExpenses(req) {
   try {
-    let { page = 1, limit = 10, showDeleted} = req.query;
+    let { page = 1, limit = 10, showDeleted } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
 
-  if(showDeleted=="false"){
-    const expenses = await Expense.find({organisationRefId: req.user.organisationId,isActive:true})
-    .populate({
-      path: "clientRefId",
-      select: "clientName",
-    })
-    .populate({
-      path: "projectRefId",
-      select: "projectName",
-    })    
-    .skip((page - 1) * limit)
-    .limit(limit);
+    const filter = {
+      organisationRefId: req.user.organisationId,
+      isActive: showDeleted == "false" ? true : false,
+    };
+
+    const totalCount = await Expense.countDocuments(filter);
+
+    const expenses = await Expense.find(filter)
+      .populate({
+        path: "clientRefId",
+        select: "clientName",
+      })
+      .populate({
+        path: "projectRefId",
+        select: "projectName",
+      })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     return {
       status: 100,
       message: "success",
-      result: expenses
+      result: expenses,
+      totalCount: totalCount,
     };
-  }else{
-    const expenses = await Expense.find({organisationRefId: req.user.organisationId,isActive:false})
-    .populate({
-      path: "clientRefId",
-      select: "clientName",
-    })
-    .populate({
-      path: "projectRefId",
-      select: "projectName",
-    })    
-    .skip((page - 1) * limit)
-    .limit(limit);
-
-    return {
-      status: 100,
-      message: "success",
-      result: expenses
-    };
-  }
   } catch (err) {
     return {
       status: 105,
@@ -366,22 +406,58 @@ async function projectSummary(req) {
       },
 
       // Calculate projectValueWithVAT, projectCost
-      {
-        $addFields: {
-          projectValueWithVAT: { $add: [{ $ifNull: ["$projectValue", 0] }, { $ifNull: ["$vatAmount", 0] }] },
-          projectCost: {
-            $sum: {
-              $map: {
-                input: "$expenses",
-                as: "e",
-                in: { $add: [{ $ifNull: ["$$e.amount", 0] }, { $ifNull: ["$$e.vat", 0] }] }
-              }
-            }
+      // {
+      //   $addFields: {
+      //     projectValueWithVAT: { $add: [{ $ifNull: ["$projectValue", 0] }, { $ifNull: ["$vatAmount", 0] }] },
+      //     projectCost: {
+      //       $sum: {
+      //         $map: {
+      //           input: "$expenses",
+      //           as: "e",
+      //           in: { $add: [{ $ifNull: ["$$e.amount", 0] }, { $ifNull: ["$$e.vat", 0] }] }
+      //         }
+      //       }
+      //     },
+      //     deductions: { $ifNull: ["$deductions", 0] }
+      //   }
+      // },
+        {
+          $addFields: {
+          projectValueWithVAT: {
+            $round: [
+              {
+                $add: [
+                  { $ifNull: ["$projectValue", 0] },
+                  { $ifNull: ["$vatAmount", 0] }
+                ]
+              },
+              2
+            ]
           },
-          deductions: { $ifNull: ["$deductions", 0] }
-        }
-      },
 
+          projectCost: {
+            $round: [
+              {
+                $sum: {
+                  $map: {
+                    input: "$expenses",
+                    as: "e",
+                    in: {
+                      $add: [
+                        { $ifNull: ["$$e.amount", 0] },
+                        { $ifNull: ["$$e.vat", 0] }
+                      ]
+                    }
+                  }
+                }
+              },
+              2
+            ]
+          },
+
+          deductions: { $ifNull: ["$deductions", 0] }
+        },
+      },
       // Calculate marginPercent
       {
         $addFields: {
@@ -1010,7 +1086,7 @@ async function projectFinancials(req) {
     const totals = await Project.aggregate([
       {
         $match: {
-          organisationId:new ObjectId(req.user.organisationId),
+          organisationRefId:new ObjectId(req.user.organisationId),
           projectStatus: statusFilter,
           isActive: true,
         },
@@ -1036,7 +1112,12 @@ async function projectFinancials(req) {
       },
       {
         $addFields: {
-          projectValueWithVAT: { $add: ["$projectValue", "$vatAmount"] },
+          projectValueWithVAT: {
+            $add: [
+              "$projectValue",
+              { $ifNull: ["$vatAmount", 0] }
+            ]
+          },
           projectCost: {
             $ifNull: [
               {
@@ -1065,12 +1146,29 @@ async function projectFinancials(req) {
       {
         $addFields: {
           averageMargin: {
-            $cond: [
-              { $eq: ["$totalProjectValue", 0] },
-              0,
-              { $multiply: [{ $divide: ["$totalEarnings", "$totalProjectValue"] }, 100] },
-            ],
-          },
+              $cond: [
+                { $eq: ["$totalProjectValue", 0] },
+                0,
+                {
+                  $round: [
+                    {
+                      $multiply: [
+                        { $divide: ["$totalEarnings", "$totalProjectValue"] },
+                        100
+                      ]
+                    },
+                    2
+                  ]
+                }
+              ]
+            },
+          // averageMargin: {
+          //   $cond: [
+          //     { $eq: ["$totalProjectValue", 0] },
+          //     0,
+          //     { $multiply: [{ $divide: ["$totalEarnings", "$totalProjectValue"] }, 100] },
+          //   ],
+          // },
         },
       },
     ]);

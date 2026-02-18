@@ -44,9 +44,25 @@ async function addUser(req) {
   }
 }
 
+const axios = require("axios");
+
+async function verifyCaptcha(token) {
+  const secret = process.env.RECAPTCHA_SECRET_KEY;
+  const response = await axios.post(
+    `https://www.google.com/recaptcha/api/siteverify?secret=${secret}&response=${token}`
+  );
+  return response.data.success;
+}
+
 async function login(req) {
   try {
-      const { userName, password } = req.body;
+      const { userName, password,captcha } = req.body;
+
+      const isHuman = await verifyCaptcha(captcha);
+      if (!isHuman) {
+        return { status: 105,result: null, message: "Captcha verification failed" };
+      }
+
       if (!(userName && password)) {
          throw new Error("UserName or Password required");
       }
