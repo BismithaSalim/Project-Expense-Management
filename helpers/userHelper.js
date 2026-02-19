@@ -70,11 +70,16 @@ async function login(req) {
       const userData = await User.findOne({
         $and: [{ userName },{ isActive: true }],
       })
+      .populate({
+        path: "organisationRefId",
+        select: "organisationName",
+      }).lean();
+
       if (!userData) {
         return {
           status: 105,
           result: null,
-          message: "user not exist"
+          message: "User not exist"
         };
       }else{
       //   var dates = new Date();
@@ -93,7 +98,7 @@ async function login(req) {
             if (userData && (await bcrypt.compare(password, userData.password))) {
 
                 var roles=userData.role
-                var organisationId=userData.organisationRefId
+                var organisationId=userData.organisationRefId?._id || null
                 const token = await fun.jwtTokenGenerator({
                     userName,
                     roles,

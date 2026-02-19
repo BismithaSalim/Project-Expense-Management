@@ -26,7 +26,7 @@ async function login(req, res) {
             status: output.status,
           })
         : res.status(400).json({
-            message: "Error",
+            message: output.message || "Error",
             errorDetails: output.errorDetails,
             status: output.status,
           });
