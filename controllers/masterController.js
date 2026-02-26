@@ -147,6 +147,23 @@ async function getRateMasters(req, res) {
     });
 }
 
+async function getRateMaster(req, res) {
+    masterHelper.getRateMaster(req).then((output) => {
+      output.result
+        ? res.status(200).json({
+            message: output.message,
+            data: output.result.data,
+            totalCount:output.result.totalCount,
+            status: output.status,
+          })
+        : res.status(400).json({
+            message: "Error",
+            errorDetails: output.errorDetails,
+            status: output.status,
+          });
+    });
+}
+
 async function getRateMasterById(req, res) {
     masterHelper.getRateMasterById(req).then((output) => {
       output.result
@@ -242,5 +259,6 @@ async function updateCostCalculation(req, res) {
     deleteRateMaster,
     createCostCalculation,
     getCostCalculation,
-    updateCostCalculation
+    updateCostCalculation,
+    getRateMaster
   }

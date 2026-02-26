@@ -398,6 +398,42 @@ async function updateCostCalculation(req,res){
     return { status: 105, result: null, errorDetails: err.message };
   }
 }
+
+async function getRateMaster(req) {
+  try {
+    const {search = "", isActive, showDeleted } = req.query;
+
+    const query = {
+      organisationRefId: req.user.organisationId,
+      isActive: showDeleted == "false" ? true : false,
+    };
+
+    if (search) {
+      query.serviceName = { $regex: search, $options: "i" };
+    }
+
+    if (isActive !== undefined) {
+      query.isActive = isActive === "true";
+    }
+
+    const data = await rateMaster
+      .find(query)
+      .sort({ createdAt: -1 })
+
+    const totalCount = await rateMaster.countDocuments(query);
+
+    return {
+      status: 100,
+      result: {
+        data,
+        totalCount
+      }
+    };
+  } catch (err) {
+    return { status: 105, result: null, errorDetails: err.message };
+  }
+}
+
 module.exports={
     addMaster,
     getAllMasters,
@@ -412,5 +448,6 @@ module.exports={
     deleteRateMaster,
     createCostCalculation,
     getCostCalculation,
-    updateCostCalculation
+    updateCostCalculation,
+    getRateMaster
 }
