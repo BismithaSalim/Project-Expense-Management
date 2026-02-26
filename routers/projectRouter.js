@@ -8,5 +8,6 @@ router.post("/updateProject",fun.verifyToken,fun.checkRole(["admin"]),projectCon
 router.get("/getProjectsByClient",fun.verifyToken,fun.checkRole(["admin","expenseEditor"]),projectController.getProjectsByClient);
 router.get("/getProjectById",fun.verifyToken,fun.checkRole(["admin"]),projectController.getProjectById);
 router.patch("/deleteProject/:id",fun.verifyToken,fun.checkRole(['admin']),projectController.deleteProject);
+router.get("/getProjects",fun.verifyToken,fun.checkRole(["admin","executive"]),projectController.getAllProjects);
 
 module.exports = router;

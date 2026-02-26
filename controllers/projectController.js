@@ -97,11 +97,28 @@ async function deleteProject(req, res) {
     });
 }
 
+async function getProjects(req, res) {
+    projectHelper.getProjects(req).then((output) => {
+      output.result
+        ? res.status(200).json({
+            message: output.message,
+            data: output.result,
+            status: output.status,
+          })
+        : res.status(400).json({
+            message: "Error",
+            errorDetails: output.errorDetails,
+            status: output.status,
+          });
+    });
+}
+
   module.exports={
     addProject,
     getAllProjects,
     updateProject,
     getProjectsByClient,
     getProjectById,
-    deleteProject
+    deleteProject,
+    getProjects
   }

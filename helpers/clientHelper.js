@@ -3,7 +3,6 @@ const mongoose = require("mongoose");
 
 async function addClient(req) {
   try {
-    console.log("req",req.body)
     const { clientName } = req.body;
     if (!clientName) {
       throw new Error("Please fill out all required fields");

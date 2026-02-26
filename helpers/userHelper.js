@@ -14,6 +14,17 @@ async function addUser(req) {
       throw new Error("Please fill out all required fields");
     }
 
+    // const existingUser = await User.findOne({ userName });
+
+    // if (existingUser) {
+    //   return {
+    //     status: 105,
+    //     message: "Error",
+    //     errorDetails: "Username must be unique"
+    //   };
+    // }
+
+
     const lastUser = await User.findOne({}, {}, { sort: { userId: -1 } });
 
     let newId;
@@ -40,6 +51,15 @@ async function addUser(req) {
 
     return { status: 100, message: "success", result: savedUser };
   } catch (err) {
+    if (err.code === 11000) {
+    if (err.keyValue.userName) {
+      return { status: 105, message: "Error", errorDetails: "Username must be unique" };
+    } else if (err.keyValue.mobileNo) {
+      return { status: 105, message: "Error", errorDetails: "Mobile number must be unique" };
+    }else if (err.keyValue.email) {
+      return { status: 105, message: "Error", errorDetails: "Email must be unique" };
+    }
+  }
     return { status: 105, result: null, errorDetails: err.message };
   }
 }
@@ -96,11 +116,12 @@ async function login(req) {
             // }else{
                 // console.log("userData",userData)
             if (userData && (await bcrypt.compare(password, userData.password))) {
-
+                var userRefId = userData._id
                 var roles=userData.role
                 var organisationId=userData.organisationRefId?._id || null
                 const token = await fun.jwtTokenGenerator({
                     userName,
+                    userRefId,
                     roles,
                     organisationId
                 });

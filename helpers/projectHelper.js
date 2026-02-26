@@ -222,11 +222,53 @@ async function deleteProject(req) {
   }
 }
 
+async function getProjects(req) {
+  try {
+    let { page = 1, limit = 10, showDeleted,search = "" } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
+
+    const filter = {
+      organisationRefId: req.user.organisationId,
+      isActive: showDeleted == "false" ? true : false,
+    };
+
+    if (search && search.trim() !== "") {
+      filter.$or = [
+        { projectName: { $regex: search, $options: "i" } },
+        { status: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    const totalCount = await Project.countDocuments(filter);
+
+    const projects = await Project.find(filter)
+      .select("projectName")
+      .sort({ projectId: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    return {
+      status: 100,
+      message: "success",
+      result: projects,
+      totalCount: totalCount,
+    };
+  } catch (err) {
+    return {
+      status: 105,
+      result: null,
+      errorDetails: err.message,
+    };
+  }
+}
+
 module.exports={
     addProject,
     getAllProjects,
     updateProject,
     getProjectsByClient,
     getProjectById,
-    deleteProject
+    deleteProject,
+    getProjects
 }
