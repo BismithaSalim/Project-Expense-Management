@@ -224,9 +224,7 @@ async function deleteProject(req) {
 
 async function getProjects(req) {
   try {
-    let { page = 1, limit = 10, showDeleted,search = "" } = req.query;
-    page = parseInt(page);
-    limit = parseInt(limit);
+    let {showDeleted,search = "" } = req.query;
 
     const filter = {
       organisationRefId: req.user.organisationId,
@@ -245,8 +243,6 @@ async function getProjects(req) {
     const projects = await Project.find(filter)
       .select("projectName")
       .sort({ projectId: 1 })
-      .skip((page - 1) * limit)
-      .limit(limit);
 
     return {
       status: 100,
