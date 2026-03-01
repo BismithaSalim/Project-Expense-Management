@@ -119,6 +119,7 @@ async function getAllUsers(req, res) {
         ? res.status(200).json({
             message: output.message,
             data: output.result,
+            totalCount:output.totalCount,
             status: output.status,
           })
         : res.status(400).json({

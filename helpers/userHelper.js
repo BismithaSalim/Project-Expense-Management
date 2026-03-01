@@ -341,40 +341,85 @@ async function updateUser(req) {
 
     return { status: 100, message: "User updated successfully", result: updatedUser };
   } catch (err) {
+    if (err.code === 11000) {
+    if (err.keyValue.userName) {
+      return { status: 105, message: "Error", errorDetails: "Username must be unique" };
+    } else if (err.keyValue.mobileNo) {
+      return { status: 105, message: "Error", errorDetails: "Mobile number must be unique" };
+    }else if (err.keyValue.email) {
+      return { status: 105, message: "Error", errorDetails: "Email must be unique" };
+    }
+  }
     return { status: 105, result: null, errorDetails: err.message };
   }
 }
 
+// async function getAllUsers(req) {
+//   try {
+//     // console.log("req.user.organisationId",req.user.organisationId)
+//     let { page = 1, limit = 10,showDeleted } = req.query;
+//     page = parseInt(page);
+//     limit = parseInt(limit);
+
+//     if(showDeleted=="false"){
+//       const users = await User.find({organisationRefId: req.user.organisationId,isActive:true})
+//         .sort({ userId: 1 })          
+//         .skip((page - 1) * limit)
+//         .limit(limit);
+
+//       return {
+//         status: 100,
+//         message: "success",
+//         result: users
+//       };
+//     }else{
+//       const users = await User.find({organisationRefId: req.user.organisationId,isActive:false})
+//         .sort({ userId: 1 })          
+//         .skip((page - 1) * limit)
+//         .limit(limit);
+
+//       return {
+//         status: 100,
+//         message: "success",
+//         result: users
+//       };
+//     }
+//   } catch (err) {
+//     return {
+//       status: 105,
+//       result: null,
+//       errorDetails: err.message,
+//     };
+//   }
+// }
+
 async function getAllUsers(req) {
   try {
-    // console.log("req.user.organisationId",req.user.organisationId)
-    let { page = 1, limit = 10,showDeleted } = req.query;
+    let { page = 1, limit = 10, showDeleted } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
 
-    if(showDeleted=="false"){
-      const users = await User.find({organisationRefId: req.user.organisationId,isActive:true})
-        .sort({ userId: 1 })          
-        .skip((page - 1) * limit)
-        .limit(limit);
+    // Determine filter based on showDeleted
+    const filter = {
+      organisationRefId: req.user.organisationId,
+      isActive: showDeleted === "false" ? true : false
+    };
 
-      return {
-        status: 100,
-        message: "success",
-        result: users
-      };
-    }else{
-      const users = await User.find({organisationRefId: req.user.organisationId,isActive:false})
-        .sort({ userId: 1 })          
-        .skip((page - 1) * limit)
-        .limit(limit);
+    // Get total count of users matching the filter
+    const totalCount = await User.countDocuments(filter);
 
-      return {
-        status: 100,
-        message: "success",
-        result: users
-      };
-    }
+    // Fetch paginated users
+    const users = await User.find(filter)
+      .sort({ userId: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    return {
+      status: 100,
+      message: "success",
+      result: users,
+      totalCount // Added total count here
+    };
   } catch (err) {
     return {
       status: 105,
