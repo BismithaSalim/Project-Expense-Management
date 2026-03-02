@@ -72,6 +72,27 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
+const optionalVerifyToken = async (req, res, next) => {
+  let token = req.headers.authorization;
+
+  if (!token) {
+    return next(); // No token → allow request
+  }
+
+  try {
+    if (token.startsWith("Bearer")) {
+      token = token.substring(7);
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+  } catch (err) {
+    console.log("Invalid token, continuing without user");
+  }
+
+  next(); // Always continue
+};
+
 const checkRole = (roles) => (req, res, next) => {
   if (!roles.includes(req.user.roles)) {
     return res.status(403).json({ message: "Access denied" });
@@ -82,6 +103,7 @@ const checkRole = (roles) => (req, res, next) => {
 module.exports = {
   jwtTokenGenerator: jwtTokenGenerator,
   verifyToken: verifyToken,
+  optionalVerifyToken:optionalVerifyToken,
   generateUniqueId: generateUniqueId,
   checkRole:checkRole
 

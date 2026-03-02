@@ -17,7 +17,7 @@ router.patch("/deleteRateMaster/:id",fun.verifyToken,fun.checkRole(['admin']),ma
 router.post("/createCostCalculation",fun.verifyToken,masterController.createCostCalculation);
 router.post("/getCostCalculation",fun.verifyToken,masterController.getCostCalculation);
 router.put("/updateCostCalculation",fun.verifyToken,masterController.updateCostCalculation);
-router.get("/getRateMaster",fun.verifyToken,fun.checkRole(["admin","executive"]),masterController.getRateMaster);
+router.get("/getRateMaster",masterController.getRateMaster);
 
 
 module.exports = router;

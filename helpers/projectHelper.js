@@ -224,13 +224,18 @@ async function deleteProject(req) {
 
 async function getProjects(req) {
   try {
-    let {showDeleted,search = "" } = req.query;
+    let { showDeleted, search = "" } = req.query;
 
-    const filter = {
-      organisationRefId: req.user.organisationId,
-      isActive: showDeleted == "false" ? true : false,
-    };
+    let filter = {};
+    // console.log("req.headers.authorization ",req.user )
+    if (req.headers.authorization === undefined) {
+      filter.isActive = showDeleted === "false" ? true : false;
+    } else {
+      filter.organisationRefId = req.user.organisationId;
+      filter.isActive = showDeleted === "false" ? true : false;
+    }
 
+    // Add search conditions if search string is provided
     if (search && search.trim() !== "") {
       filter.$or = [
         { projectName: { $regex: search, $options: "i" } },
@@ -242,7 +247,7 @@ async function getProjects(req) {
 
     const projects = await Project.find(filter)
       .select("projectName")
-      .sort({ projectId: 1 })
+      .sort({ projectId: 1 });
 
     return {
       status: 100,

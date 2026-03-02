@@ -359,12 +359,18 @@ async function createCostCalculation(req,res){
 
 async function getCostCalculation(req,res){
   try{
-   const filter = {
-      projectId: req.body.projectId,
-      locationType: req.body.locationType,
-      organisationRefId: req.user.organisationId,
-      serviceTitle: req.body.serviceTitle.toUpperCase(),
-    };
+    // console.log("req.headers.authorization",req.headers.authorization)
+    let filter = {};
+    if(req.headers.authorization==undefined){
+
+    }else{
+     filter = {
+        projectId: req.body.projectId,
+        locationType: req.body.locationType,
+        organisationRefId: req.user.organisationId,
+        serviceTitle: req.body.serviceTitle.toUpperCase(),
+      };
+  }
 
     const getData = await costCalculation.find(filter);
     return { status: 100, message: "success", result: getData };
@@ -404,7 +410,7 @@ async function getRateMaster(req) {
     const {search = "", isActive, showDeleted } = req.query;
 
     const query = {
-      organisationRefId: req.user.organisationId,
+      // organisationRefId: req.user.organisationId,
       isActive: showDeleted == "false" ? true : false,
     };
 
