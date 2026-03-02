@@ -341,7 +341,9 @@ async function createCostCalculation(req,res){
       locationType,
       city,
       services,
-      totalAmount
+      totalAmount,
+      totalCost,
+      totalMargin
     } = req.body;
 
     req.body.organisationRefId = req.user.organisationId

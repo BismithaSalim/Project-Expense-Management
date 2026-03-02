@@ -18,10 +18,13 @@ const costCalculationSchema = new Schema(
         rate : { type: Number },
         unit : { type: String },
         quantity : { type: Number },
+        cost : { type: Number },
         margin : { type: Number },
         amount : { type: Number },
     }],
     totalAmount: { type: Number },
+    totalCost: { type: Number },
+    totalMargin: { type: Number },
     organisationRefId: { 
                 type: Schema.Types.ObjectId,
                 ref:"organisation",
