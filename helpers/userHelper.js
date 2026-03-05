@@ -66,90 +66,130 @@ async function addUser(req) {
 
 const axios = require("axios");
 
-async function verifyCaptcha(token) {
-  const secret = process.env.RECAPTCHA_SECRET_KEY;
-  const response = await axios.post(
-    `https://www.google.com/recaptcha/api/siteverify?secret=${secret}&response=${token}`
-  );
-  return response.data.success;
-}
+// async function verifyCaptcha(token) {
+//   const secret = process.env.RECAPTCHA_SECRET_KEY;
+//   const response = await axios.post(
+//     `https://www.google.com/recaptcha/api/siteverify?secret=${secret}&response=${token}`
+//   );
+//   return response.data.success;
+// }
+
+// async function login(req) {
+//   try {
+//       const { userName, password,captcha } = req.body;
+
+//       const isHuman = await verifyCaptcha(captcha);
+//       if (!isHuman) {
+//         return { status: 105,result: null, message: "Captcha verification failed" };
+//       }
+
+//       if (!(userName && password)) {
+//          throw new Error("UserName or Password required");
+//       }
+
+//       const userData = await User.findOne({
+//         $and: [{ userName },{ isActive: true }],
+//       })
+//       .populate({
+//         path: "organisationRefId",
+//         select: "organisationName",
+//       }).lean();
+
+//       if (!userData) {
+//         return {
+//           status: 105,
+//           result: null,
+//           message: "User not exist"
+//         };
+//       }else{
+//       //   var dates = new Date();
+//       //   const res = await Token.find({$and:[{userName:userName,createdAt :{"$gte": dates.setHours(0,0,0,0),
+//       //  "$lte":dates.setHours(23, 59, 59, 999)}}]})
+
+//             // if(res.length!=0){
+//             //     return {
+//             //     status: 102,
+//             //     message:"Already logged in" ,
+//             //     token:res[0].token,
+//             //     result:res[0].userName
+//             //     };
+//             // }else{
+//                 // console.log("userData",userData)
+//             if (userData && (await bcrypt.compare(password, userData.password))) {
+//                 var userRefId = userData._id
+//                 var roles=userData.role
+//                 var organisationId=userData.organisationRefId?._id || null
+//                 const token = await fun.jwtTokenGenerator({
+//                     userName,
+//                     userRefId,
+//                     roles,
+//                     organisationId
+//                 });
+
+//                 req.body.userName=userName
+//                 req.body.token=token
+//                 const obj = new Token(req.body);
+//                 const saveData = await obj.save();
+                
+//                 return {
+//                     message: "Successfully login",
+//                     result: userData,
+//                     token: token,
+//                     status: 100
+//                 };
+
+//             }else {
+//                 return {
+//                 result: null,
+//                 message: "Incorrect userName or password",
+//                 status: 105,
+//                 };
+//             }
+//         // }
+//   }
+// } catch (err) {
+//     console.log(err)
+//     return { status: 105, result: null, errorDetails: err.message  };
+//   }
+// }
 
 async function login(req) {
   try {
-      const { userName, password,captcha } = req.body;
+    const { googleEmail } = req.body;
 
-      const isHuman = await verifyCaptcha(captcha);
-      if (!isHuman) {
-        return { status: 105,result: null, message: "Captcha verification failed" };
-      }
+    if (!googleEmail) {
+      return { status: 105, result: null, message: "Google email required" };
+    }
 
-      if (!(userName && password)) {
-         throw new Error("UserName or Password required");
-      }
+    // Check if user is registered
+    const userData = await User.findOne({ email: googleEmail, isActive: true }).lean();
+    if (!userData) {
+      return { status: 105, result: null, message: "User not registered" };
+    }
 
-      const userData = await User.findOne({
-        $and: [{ userName },{ isActive: true }],
-      })
-      .populate({
-        path: "organisationRefId",
-        select: "organisationName",
-      }).lean();
+    // Generate JWT token
+    const token = await fun.jwtTokenGenerator({
+      userName: userData.userName,
+      userRefId: userData._id,
+      roles: userData.role,
+      organisationId: userData.organisationRefId?._id || null,
+    });
 
-      if (!userData) {
-        return {
-          status: 105,
-          result: null,
-          message: "User not exist"
-        };
-      }else{
-      //   var dates = new Date();
-      //   const res = await Token.find({$and:[{userName:userName,createdAt :{"$gte": dates.setHours(0,0,0,0),
-      //  "$lte":dates.setHours(23, 59, 59, 999)}}]})
+        req.body.userName=userData.userName
+        req.body.email=userData.email
+        req.body.token=token
+        const obj = new Token(req.body);
+        const saveData = await obj.save();
 
-            // if(res.length!=0){
-            //     return {
-            //     status: 102,
-            //     message:"Already logged in" ,
-            //     token:res[0].token,
-            //     result:res[0].userName
-            //     };
-            // }else{
-                // console.log("userData",userData)
-            if (userData && (await bcrypt.compare(password, userData.password))) {
-                var userRefId = userData._id
-                var roles=userData.role
-                var organisationId=userData.organisationRefId?._id || null
-                const token = await fun.jwtTokenGenerator({
-                    userName,
-                    userRefId,
-                    roles,
-                    organisationId
-                });
-
-                req.body.userName=userName
-                req.body.token=token
-                const obj = new Token(req.body);
-                const saveData = await obj.save();
-                
-                return {
-                    message: "Successfully login",
-                    result: userData,
-                    token: token,
-                    status: 100
-                };
-
-            }else {
-                return {
-                result: null,
-                message: "Incorrect userName or password",
-                status: 105,
-                };
-            }
-        // }
-  }
-} catch (err) {
-    console.log(err)
-    return { status: 105, result: null, errorDetails: err.message  };
+    return {
+      status: 100,
+      message: "Successfully login",
+      result: userData,
+      token,
+    };
+  } catch (err) {
+    console.error(err);
+    return { status: 105, result: null, errorDetails: err.message };
   }
 }
 

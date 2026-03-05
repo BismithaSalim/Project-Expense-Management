@@ -5,6 +5,9 @@ const tokenSchema = new Schema({
   userName: {
     type:String,
   },
+  email: {
+    type:String,
+  },
   token: { type: String},
   
 },{ timestamps: true });
