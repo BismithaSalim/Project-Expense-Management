@@ -18,6 +18,6 @@ router.post("/createCostCalculation",fun.verifyToken,masterController.createCost
 router.post("/getCostCalculation",fun.verifyToken,masterController.getCostCalculation);
 router.put("/updateCostCalculation",fun.verifyToken,masterController.updateCostCalculation);
 router.get("/getRateMaster",masterController.getRateMaster);
-
+router.post("/costSummary",fun.verifyToken,masterController.costSummary);
 
 module.exports = router;

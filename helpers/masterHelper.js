@@ -396,7 +396,9 @@ async function updateCostCalculation(req,res){
       },
       {$set:{
         services:req.body.services,
-        totalAmount:req.body.totalAmount
+        totalAmount:req.body.totalAmount,
+        totalCost:req.body.totalCost,
+        totalMargin:req.body.totalMargin
       }},
       { new: true }
     );
@@ -442,6 +444,42 @@ async function getRateMaster(req) {
   }
 }
 
+
+async function costSummary(req) {
+  try {
+    const { project, serviceTitle, locationType } = req.body || {};
+
+    const query = { isActive: true,organisationRefId:req.user.organisationId };
+    if (project) query.projectId = project;
+    if (serviceTitle) query.serviceTitle = serviceTitle.toUpperCase();
+    if (locationType) query.locationType = locationType;
+
+    const records = await costCalculation.find(query)
+      .populate("projectId", "projectName")
+      .lean();
+
+    // Map results directly with stored totals
+    const result = records.map((record) => ({
+      _id: record._id,
+      projectName: record.projectId?.projectName || "",
+      serviceTitle: record.serviceTitle,
+      locationType: record.locationType,
+      city: record.city,
+      services: record.services,
+      totalCost: record.totalCost || 0,
+      totalAmount: record.totalAmount || 0,
+      totalMargin: record.totalMargin || 0,
+      status: record.status,
+    }));
+
+    return { status: 100, message: "success", result };
+  } catch (err) {
+    console.log("err",err)
+    return { status: 105, result: null, errorDetails: err.message };
+  }
+}
+
+
 module.exports={
     addMaster,
     getAllMasters,
@@ -457,5 +495,6 @@ module.exports={
     createCostCalculation,
     getCostCalculation,
     updateCostCalculation,
-    getRateMaster
+    getRateMaster,
+    costSummary
 }
