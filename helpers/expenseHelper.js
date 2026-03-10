@@ -1,4 +1,5 @@
 const Expense = require("../models/expense");
+const ExpenseClaim = require("../models/expenseClaim");
 const Client = require("../models/client");  
 const Project = require("../models/project");
 const APIFeature = require("../utility/APIFeature.js");
@@ -1244,6 +1245,179 @@ async function deleteExpense(req) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+
+async function createUserExpense(req) {
+  try {
+
+    const expense = new ExpenseClaim(req.body);
+
+    await expense.save();
+
+    return {
+      status: 100,
+      message: "Expense created successfully",
+      result: expense,
+    };
+
+  } catch (err) {
+    return {
+      status: 105,
+      result: null,
+      errorDetails: err.message,
+    };
+  }
+}
+
+async function updateUserExpense(req) {
+  try {
+
+    let { id } = req.query;
+
+    const expense = await ExpenseClaim.findById(id);
+    console.log("expense",expense)
+
+    if (!expense) {
+      return {
+        status: 101,
+        message: "Expense not found",
+      };
+    }
+
+    if (expense.status !== "Pending") {
+      return {
+        status: 102,
+        message: "Only pending expenses can be edited",
+      };
+    }
+
+    const updatedExpense = await ExpenseClaim.findByIdAndUpdate(
+      id,
+      req.body,
+      { new: true }
+    );
+
+    return {
+      status: 100,
+      message: "Expense updated successfully",
+      result: updatedExpense,
+    };
+
+  } catch (err) {
+    console.log("err",err)
+    return {
+      status: 105,
+      result: null,
+      errorDetails: err.message,
+    };
+  }
+}
+
+async function getAllUserExpenses(req) {
+  try {
+
+    let { userId } = req.query;
+
+    let filter = {};
+
+    if (userId) {
+      filter.userId = userId;
+    }
+
+    const expenses = await ExpenseClaim.find(filter)
+      .populate({
+        path: "userId",
+        select: "name",
+      })
+      .populate({
+        path: "approvedById",
+        select: "name",
+      })
+      .sort({ createdAt: -1 });
+
+    return {
+      status: 100,
+      message: "success",
+      result: expenses,
+    };
+
+  } catch (err) {
+    return {
+      status: 105,
+      result: null,
+      errorDetails: err.message,
+    };
+  }
+}
+
+async function approveExpense(req) {
+  try {
+
+    let { expenseId } = req.params;
+   console.log("expenseId",expenseId)
+    const approvedById = req.user.userRefId
+    const approvedBy = req.user.userName
+
+    const expense = await ExpenseClaim.findByIdAndUpdate(
+      expenseId,
+      {
+        status: "Approved",
+        approvedById,
+        approvedBy,
+        approvedAt: new Date(),
+      },
+      { new: true }
+    );
+console.log("expense",expense)
+    return {
+      status: 100,
+      message: "Expense approved successfully",
+      result: expense,
+    };
+
+  } catch (err) {
+    console.log("err",err)
+    return {
+      status: 105,
+      result: null,
+      errorDetails: err.message,
+    };
+  }
+}
+
+async function rejectExpense(req) {
+  try {
+
+    let { expenseId } = req.params;
+    const approvedById = req.user.userRefId
+    const approvedBy = req.user.userName
+
+    const expense = await ExpenseClaim.findByIdAndUpdate(
+      expenseId,
+      {
+        status: "Rejected",
+        approvedById,
+        approvedBy,
+        approvedAt: new Date(),
+      },
+      { new: true }
+    );
+
+    return {
+      status: 100,
+      message: "Expense rejected successfully",
+      result: expense,
+    };
+
+  } catch (err) {
+    return {
+      status: 105,
+      result: null,
+      errorDetails: err.message,
+    };
+  }
+}
+
 module.exports={
     addExpense,
     getAllExpenses,
@@ -1253,5 +1427,10 @@ module.exports={
     projectSummary,
     projectFinancials,
     getExpenseById,
-    deleteExpense
+    deleteExpense,
+    createUserExpense,
+    updateUserExpense,
+    getAllUserExpenses,
+    approveExpense,
+    rejectExpense
 }

@@ -145,6 +145,86 @@ async function deleteExpense(req, res) {
     });
 }
 
+async function createUserExpense(req, res) {
+    expenseHelper.createUserExpense(req).then((output) => {
+      output.result
+        ? res.status(200).json({
+            message: output.message,
+            data: output.result,
+            status: output.status,
+          })
+        : res.status(400).json({
+            message: "Error",
+            errorDetails: output.errorDetails,
+            status: output.status,
+          });
+    });
+}
+
+async function updateUserExpense(req, res) {
+    expenseHelper.updateUserExpense(req).then((output) => {
+      output.result
+        ? res.status(200).json({
+            message: output.message,
+            data: output.result,
+            status: output.status,
+          })
+        : res.status(400).json({
+            message: "Error",
+            errorDetails: output.errorDetails,
+            status: output.status,
+          });
+    });
+}
+
+async function getAllUserExpenses(req, res) {
+    expenseHelper.getAllUserExpenses(req).then((output) => {
+      output.result
+        ? res.status(200).json({
+            message: output.message,
+            data: output.result,
+            status: output.status,
+          })
+        : res.status(400).json({
+            message: "Error",
+            errorDetails: output.errorDetails,
+            status: output.status,
+          });
+    });
+}
+
+async function approveExpense(req, res) {
+    expenseHelper.approveExpense(req).then((output) => {
+      output.result
+        ? res.status(200).json({
+            message: output.message,
+            data: output.result,
+            status: output.status,
+          })
+        : res.status(400).json({
+            message: "Error",
+            errorDetails: output.errorDetails,
+            status: output.status,
+          });
+    });
+}
+
+async function rejectExpense(req, res) {
+    expenseHelper.rejectExpense(req).then((output) => {
+      output.result
+        ? res.status(200).json({
+            message: output.message,
+            data: output.result,
+            status: output.status,
+          })
+        : res.status(400).json({
+            message: "Error",
+            errorDetails: output.errorDetails,
+            status: output.status,
+          });
+    });
+}
+
 module.exports={
     addExpense,
     getAllExpenses,
@@ -154,5 +234,10 @@ module.exports={
     projectSummary,
     projectFinancials,
     getExpenseById,
-    deleteExpense
+    deleteExpense,
+    createUserExpense,
+    updateUserExpense,
+    getAllUserExpenses,
+    approveExpense,
+    rejectExpense
 }

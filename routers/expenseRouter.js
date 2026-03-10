@@ -11,5 +11,10 @@ router.get("/projectSummary",fun.verifyToken,fun.checkRole(["admin","viewer","ex
 router.get("/projectFinancials",fun.verifyToken,fun.checkRole(["admin","viewer","expenseEditor"]),expenseController.projectFinancials);
 router.get("/getExpenseById",fun.verifyToken,fun.checkRole(["admin","expenseEditor"]),expenseController.getExpenseById);
 router.patch("/deleteExpense/:id",fun.verifyToken,fun.checkRole(['admin']),expenseController.deleteExpense);
+router.post("/createUserExpense",fun.verifyToken,expenseController.createUserExpense);
+router.post("/updateUserExpense",fun.verifyToken,expenseController.updateUserExpense);
+router.get("/getAllUserExpenses",fun.verifyToken,expenseController.getAllUserExpenses);
+router.patch("/approveExpense/:expenseId", fun.verifyToken, expenseController.approveExpense);
+router.patch("/rejectExpense/:expenseId", fun.verifyToken, expenseController.rejectExpense);
 
 module.exports = router;
