@@ -11,6 +11,12 @@ const organisationSchema = new Schema(
     address:{ type: String },
     email:{ type: String },
     mobileNo: { type: String },
+    botEmail: {
+        smtpServer: { type: String },
+        port: { type: Number },
+        username: { type: String },
+        password: { type: String }
+    },
     isActive:{ type: Boolean,default:true }
   },
   { timestamps: true }
