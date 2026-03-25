@@ -279,9 +279,10 @@ async function logOut(req) {
             message:"Logout Successfully",
             result:result
         };
+
       }
   }catch(error){
-    console.log("Error",error);
+    // console.log("Error",error);
       return {status: 105,result: null, errorDetails: error.message };
   }
 }
