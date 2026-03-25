@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Token = require("../models/token");
 var fun = require("../config/commonFunction.js");
-const { result } = require("lodash");
+// const { result } = require("lodash");
 const Organisation = require("../models/organisation.js");
 
 async function addUser(req) {
@@ -193,6 +193,63 @@ async function login(req) {
   }
 }
 
+async function tenderLogin(req) {
+  try {
+    const { userName, password } = req.body;
+
+    if (!userName || !password) {
+      return { status: 105, message: "Username & Password required" ,result:null};
+    }
+
+    const userData = await User.findOne({
+      userName,
+      isActive: true,
+    });
+
+    if (!userData) {
+      return { status: 105, message: "User not found",result:null };
+    }
+
+    // ✅ Correct password check
+    const isMatch = await bcrypt.compare(password, userData.password);
+
+    if (!isMatch) {
+      return { status: 105, message: "Invalid password" };
+    }
+
+    // Optional: restrict BOT users
+    if (userData.role !== "bot") {
+      return { status: 105, message: "Access denied" };
+    }
+
+    const token = await fun.jwtTokenGenerator({
+      userName: userData.userName,
+      userRefId: userData._id,
+      roles: userData.role,
+      organisationId: userData.organisationRefId?._id || null,
+    });
+
+        req.body.userName=userData.userName
+        req.body.email=userData.email
+        req.body.token=token
+        const obj = new Token(req.body);
+        const saveData = await obj.save();
+
+    return {
+      status: 100,
+      message: "Login successful",
+      result: userData,
+      token,
+    };
+
+  } catch (err) {
+    return {
+      status: 105,
+      errorDetails: err.message,
+    };
+  }
+}
+
 async function logOut(req) {  
   try{
     var token = req.headers.authorization;
@@ -224,7 +281,7 @@ async function logOut(req) {
         };
       }
   }catch(error){
-    // console.log("Error",error);
+    console.log("Error",error);
       return {status: 105,result: null, errorDetails: error.message };
   }
 }
@@ -498,5 +555,6 @@ module.exports={
     deleteUser,
     updateUser,
     getAllUsers,
-    getUserById
+    getUserById,
+    tenderLogin
 }

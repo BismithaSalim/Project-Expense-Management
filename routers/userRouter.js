@@ -4,6 +4,7 @@ var fun = require("../config/commonFunction.js");
 
 router.post("/addUser",fun.verifyToken,userController.addUser);
 router.post("/login",userController.login);
+router.post("/tenderLogin",userController.tenderLogin);
 router.post("/logout",userController.logOut);
 router.post("/addAdminUser/:id",fun.verifyToken,fun.checkRole(["superAdmin"]),userController.addAdminUser);
 router.get("/:id/getAdminByOrganisation",fun.verifyToken,fun.checkRole(["superAdmin"]),userController.getAdminByOrganisation);

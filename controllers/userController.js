@@ -33,6 +33,23 @@ async function login(req, res) {
     });
 }
 
+async function tenderLogin(req, res) {
+    userHelper.tenderLogin(req).then((output) => {
+      output.result
+        ? res.status(200).json({
+            message: output.message,
+            data: output.result,
+            token:output.token,
+            status: output.status,
+          })
+        : res.status(400).json({
+            message: output.message || "Error",
+            errorDetails: output.errorDetails,
+            status: output.status,
+          });
+    });
+}
+
 async function logOut(req, res) {
     userHelper.logOut(req).then((output) => {
       output.result
@@ -155,5 +172,6 @@ module.exports={
     deleteUser,
     updateUser,
     getAllUsers,
-    getUserById
+    getUserById,
+    tenderLogin
 }
