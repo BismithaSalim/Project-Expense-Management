@@ -119,7 +119,7 @@ async function addTender(req) {
       docsFolder,
       bidOpened,
       tenderAction,
-      organisationRefId: req.user.organisationId // attach to logged-in org
+      // organisationRefId: req.user.organisationId // attach to logged-in org
     });
 
     const savedTender = await newTender.save();
@@ -147,7 +147,7 @@ async function updateTender(req) {
 
     // Ensure tender belongs to the organisation
     const updatedTender = await Tender.findOneAndUpdate(
-      { _id: id, organisationRefId: req.user.organisationId },
+      { _id: id },
       updateData,
       { new: true } // return updated doc
     );
@@ -176,7 +176,7 @@ async function getTenders(req) {
   try {
     const {search = "",showDeleted } = req.query;
      const query = {
-      organisationRefId: req.user.organisationId,
+      // organisationRefId: req.user.organisationId,
       isActive: showDeleted == "false" ? true : false,
     };
 
@@ -204,7 +204,7 @@ async function getTenders(req) {
 async function getTenderById(req) {
   try {
     const { id } = req.params;
-    const tender = await Tender.findOne({ _id: id, organisationRefId: req.user.organisationId });
+    const tender = await Tender.findOne({ _id: id });
 
     if (!tender) {
       return { status: 102, message: "Tender not found", result: null };
@@ -232,7 +232,7 @@ async function deleteTender(req) {
 
     const data = await Tender.findOne({
        _id: id,
-       organisationRefId: req.user.organisationId
+      //  organisationRefId: req.user.organisationId
      });
  
      if (!data) throw new Error("Tender not found");
